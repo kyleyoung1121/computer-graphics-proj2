@@ -265,9 +265,9 @@ for (let row = 0; row < 5; row++) {
 
 const cloudBezierPoints = [
   {z:0, y:0},
-  {z:120, y:50},
-  {z:240, y:-50},
-  {z:360, y:0},
+  {z:100, y:50},
+  {z:200, y:-50},
+  {z:300, y:0},
 ]
 
 const cloudInstances = [];
@@ -441,7 +441,7 @@ document.addEventListener("keydown", (event) => {
 
     case "r":
       // Reset camera
-      cameraProgressDegrees = 0;
+      cameraProgressDegrees = 45;
       draw();
       break;
     
@@ -499,6 +499,8 @@ function draw() {
   for (const cloud of cloudInstances) {
     // For each cloud, compute all relevant Bezier curve coeffecients
     let [p0, p1, p2, p3] = cloudBezierPoints;
+
+    // Math: https://www.youtube.com/watch?v=7adUs4o2_JM
     let cz = 3 * (p1.z - p0.z);
     let bz = 3 * (p2.z - p1.z) - cz;
     let az = p3.z - p0.z - cz - bz;
@@ -507,6 +509,7 @@ function draw() {
     let by = 3 * (p2.y - p1.y) - cy;
     let ay = p3.y - p0.y - cy -by;
 
+    // Some cloud instances start with a head start
     let t = (cloudProgress + cloud.pathStartingProgress)/100;
     if (t > 1) {
       t -= 1;
@@ -519,7 +522,7 @@ function draw() {
       // First stretch the cube to its height, then move it to its spot.
       // (In multiply(a, b), b happens first, so scaling goes on the right.)
       const model = multiply(
-        translation(cube.x + cloud.xOffset, 20 + cube.y + cloud.yOffset + yt/2, cube.z + cloud.zOffset + zt/3),
+        translation(cube.x + cloud.xOffset, 20 + cube.y + cloud.yOffset + yt/2, cube.z + cloud.zOffset + zt/2.5),
         scaling(2, 2, 2),
       );
 
@@ -534,4 +537,5 @@ function draw() {
 // Redraw if the browser window changes size.
 window.addEventListener('resize', draw);
 
+// 30 FPS
 startAnimating(30);
