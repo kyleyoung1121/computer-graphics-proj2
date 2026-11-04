@@ -163,53 +163,167 @@ const uColor = gl.getUniformLocation(program, 'uColor');
 
 
 // ---------------------------------------------------------------------
-// 3. THE SCENE: a plain JavaScript list of cubes
+// 3. THE SCENE: a grid of cubes, adjusted in height & color based on height/color maps
 //    This part has nothing to do with WebGL - it's just data.
-//    The cubes are laid out in a GRID_SIZE × GRID_SIZE grid on the
-//    ground plane (y = 0), centered on the origin.
 // ---------------------------------------------------------------------
 
-function getHeightData() {
+let cubeResolutionLevel = 5;
+let imageResolutionLevel = 2;
 
-  const img = document.getElementById("height_map_img");
-  const canvas = document.getElementById("c2");
-  const ctx = canvas.getContext('2d'); 
-  
-  img.crossOrigin = "Anonymous";
-  
-  canvas.width = img.width; 
-  canvas.height = img.height; 
-  
-  ctx.drawImage(img, 0, 0); 
-  
-  const rgba = ctx.getImageData( 
-    0, 0, img.width, img.height 
-  ).data; 
+const imageResolutionOptionsText = [
+  10,50,100,250,500,1000
+]
 
-  console.log(rgba);
+function displayResolutions() {
+  document.getElementById("cube_resolution_text").innerHTML = "Cube Resolution = " + 2 ** (1 + cubeResolutionLevel) + " (1 or 2 to step + or -)";
+  document.getElementById("image_resolution_text").innerHTML = "Image Resolution = " + imageResolutionOptionsText[imageResolutionLevel] + " (3 or 4 to step + or -)";
 }
+displayResolutions();
 
+const heightImages = [
+  "height_map_0_img",
+  "height_map_1_img",
+  "height_map_2_img",
+  "height_map_3_img",
+  "height_map_4_img",
+  "height_map_5_img",
+]
 
-getHeightData();
-
-
-const GRID_SIZE = 100;
+const colorImages = [
+  "color_map_0_img",
+  "color_map_1_img",
+  "color_map_2_img",
+  "color_map_3_img",
+  "color_map_4_img",
+  "color_map_5_img",
+]
 
 let cubes = [];
+
 function addCubes() {
+  const GRID_SIZE = 2 ** (1 + cubeResolutionLevel);
+  const TOPOLOGY_HEIGHT = 0.10 * GRID_SIZE;
+  const TOPOLOGY_OFFSET = 0.03 * GRID_SIZE;
+
+  const heightImg = document.getElementById(heightImages[imageResolutionLevel]);
+  const heightCanvas = document.getElementById("height_canvas");
+  const heightContext = heightCanvas.getContext('2d'); 
+  heightCanvas.width = heightImg.width; 
+  heightCanvas.height = heightImg.height; 
+  heightContext.drawImage(heightImg, 0, 0);
+
+  const colorImg = document.getElementById(colorImages[imageResolutionLevel]);
+  const colorCanvas = document.getElementById("color_canvas");
+  const colorContext = colorCanvas.getContext('2d'); 
+  colorCanvas.width = colorImg.width; 
+  colorCanvas.height = colorImg.height; 
+  colorContext.drawImage(colorImg, 0, 0);
+
   cubes = [];
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
-      cubes.push({
-        x: (col - (GRID_SIZE - 1) / 2),
-        z: (row - (GRID_SIZE - 1) / 2),
-        height: 1,
-        color: [Math.random(), Math.random(), Math.random()],   // random RGB
-      });
+
+  // Case 1: Higher cube resolution than image resolution
+  if (GRID_SIZE > heightImg.width) {
+    console.log("Case 1: Higher cube resolution than image resolution");
+    const ratio = heightImg.width / GRID_SIZE
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+
+        const newPos = [Math.floor(row * ratio), Math.floor(col * ratio)]
+
+        const heightData = heightContext.getImageData( 
+          newPos[0], newPos[1], 1, 1 
+        ).data;
+        
+        const colorData = colorContext.getImageData( 
+          newPos[0], newPos[1], 1, 1 
+        ).data;
+    
+        cubes.push({
+          x: (col - (GRID_SIZE - 1) / 2),
+          z: (row - (GRID_SIZE - 1) / 2),
+          height: (heightData[0]/255)*TOPOLOGY_HEIGHT+TOPOLOGY_OFFSET,
+          color: [colorData[0]/255, colorData[1]/255, colorData[2]/255],
+        });
+      }
+    }
+  }
+
+  // Case 2: Higher image resolution than cube resolution
+  else if (GRID_SIZE < heightImg.width) {
+    console.log("Case 2: Higher image resolution than cube resolution");
+    const ratio = heightImg.width / GRID_SIZE
+    const flooredRatio = Math.floor(ratio);
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+
+        const newPos = [Math.floor(row * ratio), Math.floor(col * ratio)]
+
+        const heightData = heightContext.getImageData( 
+          newPos[0], newPos[1], flooredRatio, flooredRatio 
+        ).data;
+        
+        let heightDataIterator = 0;
+        let heightAggregate = 0;
+        while (heightDataIterator < (heightData.length - 1)) {
+          heightAggregate += heightData[heightDataIterator];
+          heightDataIterator += 4;
+        }
+        // Get the average height in this region
+        heightAggregate /= (heightDataIterator/4);
+
+        const colorData = colorContext.getImageData( 
+          newPos[0], newPos[1], flooredRatio, flooredRatio 
+        ).data;
+
+        let colorDataIterator = 0;
+        let redAggregate = 0;
+        let greenAggregate = 0;
+        let blueAggregate = 0;
+        while (colorDataIterator < (colorData.length - 3)) {
+          redAggregate += colorData[colorDataIterator];
+          greenAggregate += colorData[colorDataIterator+1];
+          blueAggregate += colorData[colorDataIterator+2];
+          colorDataIterator += 4;
+        }
+        // Get the average color in this region
+        redAggregate /= (colorDataIterator/4);
+        greenAggregate /= (colorDataIterator/4);
+        blueAggregate /= (colorDataIterator/4);
+    
+        cubes.push({
+          x: (col - (GRID_SIZE - 1) / 2),
+          z: (row - (GRID_SIZE - 1) / 2),
+          height: (heightAggregate/255)*TOPOLOGY_HEIGHT+TOPOLOGY_OFFSET,
+          color: [colorData[0]/255, colorData[1]/255, colorData[2]/255],
+        });
+      }
+    }
+  }
+
+  // Case 3: Resolution equal
+  else {
+    console.log("Case 3: Resolution equal");
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+
+        const heightData = heightContext.getImageData( 
+          row, col, 1, 1 
+        ).data;
+        
+        const colorData = colorContext.getImageData( 
+          row, col, 1, 1 
+        ).data;
+    
+        cubes.push({
+          x: (col - (GRID_SIZE - 1) / 2),
+          z: (row - (GRID_SIZE - 1) / 2),
+          height: (heightData[0]/255)*TOPOLOGY_HEIGHT+TOPOLOGY_OFFSET,
+          color: [colorData[0]/255, colorData[1]/255, colorData[2]/255],
+        });
+      }
     }
   }
 }
-addCubes();
 
 // ---------------------------------------------------------------------
 // 4. MATRIX HELPERS
@@ -325,6 +439,47 @@ document.addEventListener("keydown", (event) => {
       cameraProgressDegrees = 0;
       draw();
       break;
+
+    case "1":
+      // Adjust Cube Resolution
+      cubeResolutionLevel += 1;
+      if (cubeResolutionLevel > 9) {
+        cubeResolutionLevel = 0;
+      }
+      displayResolutions();
+      draw();
+      break;
+    
+      case "2":
+      // Adjust Cube Resolution
+      cubeResolutionLevel -= 1;
+      if (cubeResolutionLevel < 0) {
+        cubeResolutionLevel = 9;
+      }
+      displayResolutions();
+      draw();
+      break;
+
+    case "3":
+      // Adjust Image Resolution
+      imageResolutionLevel += 1;
+      if (imageResolutionLevel > 5) {
+        imageResolutionLevel = 0;
+      }
+      displayResolutions();
+      draw();
+      break;
+    
+    case "4":
+      // Adjust Image Resolution
+      imageResolutionLevel -= 1;
+      if (imageResolutionLevel < 0) {
+        imageResolutionLevel = 5;
+      }
+      displayResolutions();
+      draw();
+      break;
+
     default:
       return; 
   }
@@ -357,11 +512,13 @@ function draw() {
 
   // The camera is the same for every cube, so set it once.
   const aspect = canvas.width / canvas.height;
-  gl.uniformMatrix4fv(uProjection, false, perspective(Math.PI / 4, aspect, 0.1, 1000));
-  gl.uniformMatrix4fv(uView, false, lookAt(calculateCameraPosition(100), [0, 0, 0], [0, 1, 0]));
+  const GRID_SIZE = 2 ** (1 + cubeResolutionLevel);
+  gl.uniformMatrix4fv(uProjection, false, perspective(Math.PI / 4, aspect, 0.1, GRID_SIZE * 10));
+  gl.uniformMatrix4fv(uView, false, lookAt(calculateCameraPosition(GRID_SIZE), [0, 0, 0], [0, 1, 0]));
 
 
   // Draw every cube: same triangles each time, different uniforms.
+  addCubes();
   for (const cube of cubes) {
     // First stretch the cube to its height, then move it to its spot.
     // (In multiply(a, b), b happens first, so scaling goes on the right.)

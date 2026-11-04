@@ -45,6 +45,9 @@ const gl = canvas.getContext('webgl');
 //      varying   - passed from the vertex shader to the fragment shader
 // ---------------------------------------------------------------------
 
+// Identity function to match 'glsl literal' linter
+const glsl = x => x;
+
 const vertexShaderSource = glsl`
   attribute vec3 aPosition;   // corner position of the cube (model space)
   attribute vec3 aNormal;     // direction the face is pointing
