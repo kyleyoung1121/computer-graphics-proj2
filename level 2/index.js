@@ -1,8 +1,9 @@
 // =====================================================================
-//  Project 2: Cube world -- Level 0
-//  - Create a web application using html, css, javascript and webgl. 
-//  - A portion of this page (a header) should give a title, your name and have space for information about your project. 
-//  - Display a single cube of dimensions 2x2x2 in your scene.  
+//  Project 2: Cube world -- Level 2
+//  - Add a color map & height map (both PNG files)
+//  - Load in data from the maps to apply to the grid of cubes
+//  - Properly scale/sample from the maps when the grid resolution is higher or lower
+//  - Add some resolution options for the user to play around with (I added cube resolution, and image resolution options)
 // =====================================================================
 
 // Get a reference to WebGL

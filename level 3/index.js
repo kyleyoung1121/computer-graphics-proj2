@@ -1,30 +1,19 @@
 // =====================================================================
-//  A grid of cubes with random colors and random heights, in WebGL
+//  Project 2: Cube world -- Level 3
+//  - Create some objects in the sky 
+//  - These objects should move in paths using bezier curves (My clouds move along a simple tilda shaped curve)
+//  - When the object completes its path, it should reset
+//
+//  My bezier curve's control points are as follows:
+//
+//  {z:0, y:0},
+//  {z:100, y:50},
+//  {z:200, y:-50},
+//  {z:300, y:0},
+//
+//  This results in the clouds flying forward (Z) and bobbing up (Y), then curving down (-Y), then back up (Y).
+//
 // =====================================================================
-//
-// THE BIG PICTURE
-// ---------------
-// WebGL can only draw points, lines and triangles. To draw a cube we
-// describe it as 12 triangles (2 per face × 6 faces), hand those
-// triangles to the GPU, and then ask the GPU to draw that cube once for
-// every cube in our list, each time with a different position, height
-// and color.
-//
-// Every frame of WebGL drawing follows the same basic steps:
-//
-//   1. SHADERS  - small programs that run on the GPU. The *vertex shader*
-//                 decides where each corner (vertex) of a triangle lands
-//                 on the screen. The *fragment shader* decides the color
-//                 of each pixel inside the triangle.
-//   2. BUFFERS  - we copy our vertex data (the corners of the cube) into
-//                 GPU memory once, at startup.
-//   3. UNIFORMS - values that stay the same for a whole draw call, like
-//                 "this cube is red" or "this cube is 3 units tall".
-//                 We change them before drawing each cube.
-//   4. DRAW     - we tell the GPU "draw 36 vertices as triangles".
-//
-// The sections below follow that same order.
-
 
 // ---------------------------------------------------------------------
 // 0. Get a WebGL "context" from the <canvas> element in index.html.
