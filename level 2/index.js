@@ -534,7 +534,11 @@ function draw() {
   }
 }
 
+// Initial draw. Most calls will come from a button press, but draw now as an initial frame
 draw();
+
+// In case the image didn't load fast enough to draw, try again a split second after first loading the page to avoid black screen
+setTimeout(draw, 200);
 
 // Redraw if the browser window changes size.
 window.addEventListener('resize', draw);
