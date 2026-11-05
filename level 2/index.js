@@ -203,8 +203,8 @@ let cubes = [];
 
 function addCubes() {
   const GRID_SIZE = 2 ** (1 + cubeResolutionLevel);
-  const TOPOLOGY_HEIGHT = 0.10 * GRID_SIZE;
-  const TOPOLOGY_OFFSET = 0.03 * GRID_SIZE;
+  const TOPOLOGY_HEIGHT = 0.25 * GRID_SIZE;
+  const TOPOLOGY_OFFSET = 0.01 * GRID_SIZE;
 
   const heightImg = document.getElementById(heightImages[imageResolutionLevel]);
   const heightCanvas = document.getElementById("height_canvas");
